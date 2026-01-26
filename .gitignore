@@ -1,0 +1,5 @@
+*data
+*.pyc
+*MNIST
+*.ckpt
+*.csv
