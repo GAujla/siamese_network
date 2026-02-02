@@ -2,4 +2,7 @@
 *.pyc
 *MNIST
 *.ckpt
-*.csv
+src/ml-runs/*
+src/lightning_logs/*
+*.pth
+*.db
