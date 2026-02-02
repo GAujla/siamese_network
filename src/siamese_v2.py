@@ -4,7 +4,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader
 from torchvision import transforms
 from PIL import Image
 import pytorch_lightning as L
@@ -56,7 +56,6 @@ class SiameseNeuralNet(L.LightningModule):
         super().__init__()
         self.save_hyperparameters()
         
-        # Architecture logic
         self.cnn1 = nn.Sequential(
             nn.Conv2d(1, 96, kernel_size=11, stride=1),
             nn.ReLU(inplace=True),
@@ -105,11 +104,11 @@ class SiameseNeuralNet(L.LightningModule):
     def configure_optimizers(self):
         return optim.Adam(self.parameters(), lr=self.hparams.lr, weight_decay=0.0005)
     
-    def test(self, batch, batch_idx):
+    def validation_step(self, batch, batch_idx):
         test_img0, test_img1, test_label = batch
         test_out1, test_out2 = self(test_img0, test_img1)
-        test_loss = self.criterion(test_out1, test_out2, test_label)
-        self.log("test_loss", test_loss, prog_bar=True, on_epoch=True)
+        val_loss = self.criterion(test_out1, test_out2, test_label)
+        self.log("val_loss", val_loss, prog_bar=True, on_epoch=True)
 
     
 if __name__ == "__main__":
@@ -121,31 +120,29 @@ if __name__ == "__main__":
         )
 
 
-    # Transformations
     print(torch.cuda.is_available())
     transform = transforms.Compose([
         transforms.Resize((105, 105)),
         transforms.ToTensor()
     ])
 
-    # Data Loading
     dataset = SiameseDataset(
         training_csv=r"C:\Users\Gurpreet\siamese_network\src\data\train\train_small.csv", 
         training_dir=r"C:\Users\Gurpreet\siamese_network\src\data\train\train", 
         transform=transform
     )
 
-    test_dataset = SiameseDataset(
+    validation_dataset = SiameseDataset(
         training_csv=r"C:\Users\Gurpreet\siamese_network\src\data\test\test_data.csv",
-        training_dir=r"C:\Users\Gurpreet\siamese_network\src\data\test\test"
+        training_dir=r"C:\Users\Gurpreet\siamese_network\src\data\test\test",
+        transform=transform
 
     )
     train_dataloader = DataLoader(dataset, batch_size=1, shuffle=True, num_workers=4)
 
-    valiidation_dataloader = DataLoader(test_dataset, batch_size=1, shuffle=False, num_workers=4)
+    valiidation_dataloader = DataLoader(validation_dataset, batch_size=1, shuffle=False, num_workers=4)
 
 
-    # Initialize Model
     model = SiameseNeuralNet(lr=1e-3, margin=1.0)
 
 
